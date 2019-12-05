@@ -1,0 +1,10 @@
+Assembly-CSharp.dll
+Newtonsoft.Json.dll
+UnityEngine.AnimationModule.dll
+UnityEngine.CoreModule.dll
+UnityEngine.dll
+UnityEngine.PhysicsModule.dll
+VRCCore-Standalone.dll
+VRCModLoader.dll
+VRCMenuUtils.dll
+VRCSDK2.dll
