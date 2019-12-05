@@ -17,16 +17,6 @@ namespace VRCDynamicBones
 {
     public static class VRCDBAExtensions
     {
-        public static string GetDisplayName(this VRC.Player player)
-        {
-            return (player.AIJMEEHEKCI != null ? player.AIJMEEHEKCI.displayName : "");
-        }
-
-        public static string GetUserId(this VRC.Player player)
-        {
-            return (player.AIJMEEHEKCI != null ? player.AIJMEEHEKCI.id : "");
-        }
-
         public static Vector3 GetEyesPosition(this VRC.Player player)
         {
             if (player != null && player.vrcPlayer != null && player.vrcPlayer.avatarGameObject != null) {
@@ -226,20 +216,6 @@ namespace VRCDynamicBones
                      player.vrcPlayer.avatarGameObject.name.IndexOf("Avatar_Utility_Base_") == 0);
         }
 
-        VRC.Player GetLocalPlayer()
-        {
-            if (VRC.Core.APIUser.CurrentUser != null) {
-                string localUserId = VRC.Core.APIUser.CurrentUser.id;
-                VRC.Player[] vrcPlayers = VRC.PlayerManager.GetAllPlayers();
-
-                foreach (VRC.Player p in vrcPlayers) {
-                    if (Equals(p.GetUserId(), localUserId))
-                        return p;
-                }
-            }
-            return null;
-        }
-
         bool PlayerListContainsPlayer(List<PlayerInfo> playerList, PlayerInfo player)
         {
             foreach (PlayerInfo p in playerList) {
@@ -254,20 +230,16 @@ namespace VRCDynamicBones
             if (VRC.Core.APIUser.CurrentUser == null)
                 return;
 
-            bool hasChanges = false;
-
             // Remove destroyed objects
             for (int i = 0; i < players.Count; i++) {
                 PlayerInfo p = players[i];
                 if (p.gameObject == null) {
+                    Log("Remove Player: " + p.displayName);
                     players.RemoveAt(i);
-                    hasChanges = true;
                     i--;
                 }
                 i++;
             }
-
-            string localUserId = VRC.Core.APIUser.CurrentUser.id;
 
             VRC.Player[] vrcPlayers = VRC.PlayerManager.GetAllPlayers();
             
@@ -276,21 +248,13 @@ namespace VRCDynamicBones
                     PlayerInfo p = new PlayerInfo(player.vrcPlayer.avatarGameObject, player.ToString());
 
                     if (!PlayerListContainsPlayer(players, p)) {
-                        string userId = player.GetUserId();
-                        bool isLocalPlayer = Equals(userId, localUserId);
-                        Log("Add " + (isLocalPlayer ? "Local Player: " : "Player: ") + p.displayName + " (" + userId + ")");
-
-                        var avatarDescriptor = player.vrcPlayer.avatarGameObject.GetComponent<VRCSDK2.VRC_AvatarDescriptor>();
-                        
-                        collisionManager.AddPlayer(p.gameObject, isLocalPlayer, p.displayName, avatarDescriptor.ViewPosition.y);
+                        bool isLocalPlayer = player.name.Contains("Local");
+                        Log("Add " + (isLocalPlayer ? "Local Player: " : "Player: ") + p.displayName);
+                        collisionManager.AddPlayer(p.gameObject, isLocalPlayer, p.displayName, player.GetEyesPosition().y);
                         players.Add(p);
-                        hasChanges = true;
                     }
                 }
             }
-            
-            if (hasChanges)
-                Log("Player list changed");
         }
 
         #endregion
