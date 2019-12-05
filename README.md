@@ -10,10 +10,10 @@ Optimizes the performance of dynamic bones, significantly reduces the load on th
 >  **USE IT AT YOUR OWN RISK**, I am not responsible for any bans or any punishments you may get by using this mod!
 
 ## How to enable
-To use this mod open your quick menu and on the left there should be a *"Dynamic Bones"* button.
+To use this mod open your quick menu and on the left there should be a *Dynamic Bones* button.
 After pressing it, a page with options will appear:
 
-*Put Screenshot Here*
+![](/docs/dynamic_bones_mod.png)
 
 ## Options description:
 
@@ -28,9 +28,18 @@ After pressing it, a page with options will appear:
     Local Colliders Filter   ALL / UPPER BODY / HANDS ONLY             Filters specific colliders for your avatar
     Others Colliders Filter  ALL / UPPER BODY / HANDS ONLY             Filters specific colliders for other players
 
+## Unity Test Project
+
+Allows you to test different options and their impact on performance.
+Included avatar have 6 dynamic bones (105 joints) and 8 colliders.
+You can move avatars around to observe collisions between them.
+
+![](/docs/dynamic_bones_unity_test_project.png)
+
 ## Requirements
 - [VRCModLoader by Slaynash](https://github.com/Slaynash/VRCModLoader)
 - [VRCMenuUtils](https://github.com/AtiLion/VRCMenuUtils)
+- [Dynamic Bone Asset for Unity](https://assetstore.unity.com/packages/tools/animation/dynamic-bone-16743)
 
 ## Installation ##
 Please make sure you have downloaded and installed [VRCModLoader](https://github.com/Slaynash/VRCModLoader) before continuing!
