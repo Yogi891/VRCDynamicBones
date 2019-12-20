@@ -9,35 +9,36 @@ Optimizes the performance of dynamic bones, significantly reduces the load on th
 >   
 >  **USE IT AT YOUR OWN RISK**, I am not responsible for any bans or any punishments you may get by using this mod!
 
-## How to enable
-To use this mod open your quick menu and on the left there should be a *Dynamic Bones* button.
-After pressing it, a page with options will appear:
-
-![](/docs/dynamic_bones_mod.png)
-
-## Options description:
-
-    Option                   Values                                    Description
-    
-    Advanced Settings        Enabled (this mod will control dynamic bones) / Disabled (default dynamic bones behaviour)
-    Mode                     Local / Global (Between You and Other Players) / Global (Between All Players) / Disabled
-    Working Distance         3m/5m/10m/20m/40m/INFINITE     Maximum distance from you to other players at which theirs dynamic bones will stay enabled
-    Update Rate              Constant update rate / Distance Dependent update rate
-    Max Update Rate          30/60/90/120/Display Rate      Update rate for dynamic bones that are local or close to you
-    Min Update Rate          15/30/60/90/Display Rate       Update rate for dynamic bones that are far away when Distance Dependent mode is enabled
-    Local Colliders Filter   All / Upper Body / Hands Only  Filters specific colliders for your avatar
-    Others Colliders Filter  All / Upper Body / Hands Only  Filters specific colliders for other players
-
 ## Requirements
 - [VRCModLoader by Slaynash](https://github.com/Slaynash/VRCModLoader)
 - [VRCMenuUtils](https://github.com/AtiLion/VRCMenuUtils)
 
-## Installation ##
-Please make sure you have downloaded and installed [VRCModLoader](https://github.com/Slaynash/VRCModLoader) before continuing!
-> 1. Download the latest **Release** version of the mod from the Releases section
-> 2. Navigate to your VRChat directory *(where all the VRChat game files are located, usually it's C:\Program Files (x86)\Steam\steamapps\common\VRChat)*
-> 3. Drag/copy the DLL file that you have downloaded into the Mods folder
-> 4. That's it! Now just run the game and the mod should be installed!
+## How to install
+Install VRCModLoader and VRCMenuUtils using [VRChatModManager](https://github.com/Slaynash/VRChatModInstaller/releases)  
+or download and install them manually  
+> 1. Download the latest version of the mod from the Releases section of it's GitHub page  
+> 2. Navigate to your VRChat game directory *(usually it's C:\Program Files (x86)\Steam\steamapps\common\VRChat)*  
+> 3. Drag/copy the DLL file that you have downloaded into the Mods folder  
+
+## How to enable/use
+Launch the game;  
+Uncheck the '*Limit Dynamic Bone Usage*' in the performance options;  
+If you're using emmVRC mod, disable it's global dynamic bones functionality.  
+To use this mod open your quick menu and on the left there should be a *Dynamic Bones Advanced* button,  
+after pressing it, a page with options will appear:
+
+![](/docs/dynamic_bones_mod.png)
+
+## Buttons description:
+
+    Advanced Settings        Enabled (this mod will control dynamic bones) / Disabled (default dynamic bones behaviour)
+    Mode                     Local / Global (between you and other players) / Global (between all players) / Disabled
+    Working Distance         3m/5m/10m/20m/40m/INFINITE (maximum distance from you to other players at which theirs dynamic bones will stay enabled)
+    Update Rate              Constant / Distance Dependent update rate
+    Max Update Rate          30/60/90/120/Display Rate (update rate for dynamic bones that are local or close to you)
+    Min Update Rate          15/30/60/90/Display Rate (update rate for dynamic bones that are far away when Distance Dependent mode is enabled)
+    Local Colliders Filter   All / Upper Body / Hands Only (filters specific colliders for your avatar)
+    Others Colliders Filter  All / Upper Body / Hands Only (filters specific colliders for other players)
 
 
 ## Unity Test Project
