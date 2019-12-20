@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 
 public enum CMDynamicBonesMode {
+    Disabled          = -1,
     Local             = 0,
     GlobalForPlayer   = 1,
     GlobalForEveryone = 2
@@ -23,10 +24,8 @@ public enum CMCollidersFilter {
 
 public class CollisionsManager
 {
-    bool _enabled = true;  // Enables/disables control over dynamic bones
+    CMDynamicBonesMode _dynamicBonesMode = CMDynamicBonesMode.Local;  // Disabled / Local for everyone / Between local user and other players / Between all players
 
-    public bool               enableDynamicBones    = true;
-    public CMDynamicBonesMode dynamicBonesMode      = CMDynamicBonesMode.Local;   // Local for everyone / Between local user and other players / Between all players
     public float              workingDistance       = 15;                         // Maximum distance from the camera to dynamic bones at which they will stay enabled
     public CMUpdateRateMode   updateRateMode        = CMUpdateRateMode.Constant;  // Constant / Distance Dependent
     public CMCollidersFilter  localCollidersFilter  = CMCollidersFilter.All;      // Enables specific colliders filter mode for local user
@@ -41,15 +40,40 @@ public class CollisionsManager
     public bool enableOptimizations = true;
 
     public bool showDebugColliders;
+    
+    static Vector4 debugColliderColorDefault  = new Vector4(1, 1, 1, 0.35f);
+    static Vector4 debugColliderColorCollide  = new Vector4(0.44f, 0, 1, 0.35f);
+    static Vector4 debugColliderColorInactive = new Vector4(0.5f, 0.5f, 0.5f, 0.3f);
 
     List<CMPlayerInfo> playersInfo = new List<CMPlayerInfo>(64);
     
+    public CMDynamicBonesMode dynamicBonesMode {
+        get { return _dynamicBonesMode; }
+        set {
+            if (_dynamicBonesMode != value) {
+                _dynamicBonesMode = value;
+                bool enableBones = (_dynamicBonesMode != CMDynamicBonesMode.Disabled);
+                foreach (CMPlayerInfo player in playersInfo) {
+                    if (player.gameObject != null) {
+                        player.enableDynamicBones = enableBones;
+                        if (showDebugColliders && !enableBones)
+                            player.SetDebugColliderColor(debugColliderColorInactive);
+                    }
+                }
+            }
+        }
+    }
+
     public void Clear()
     {
-        foreach (CMPlayerInfo playerInfo in playersInfo) {
-            foreach (CMBoneChain boneChain in playerInfo.boneChains) {
-                boneChain.enabled = true;
-                boneChain.RestoreOriginalColliders();
+        foreach (CMPlayerInfo player in playersInfo) {
+            if (player.gameObject != null) {
+                player.enableDynamicBones = true;
+                player.showDebugCollider = false;
+                foreach (CMBoneChain boneChain in player.boneChains) {
+                    boneChain.RestoreOriginalState();
+                    boneChain.RestoreOriginalColliders();
+                }
             }
         }
         playersInfo.Clear();
@@ -58,7 +82,6 @@ public class CollisionsManager
     public void AddPlayer(GameObject gameObject, bool isLocalPlayer, string name, float eyeHeight)
     {
         if (gameObject != null && !Contains(gameObject)) {
-            //Log("Add Player " + gameObject);
             playersInfo.Capacity = Math.Max(playersInfo.Capacity, playersInfo.Count + 1);
 
             var playerInfo = new CMPlayerInfo(gameObject, isLocalPlayer, name, eyeHeight);
@@ -68,14 +91,15 @@ public class CollisionsManager
 
     public void Remove(GameObject gameObject)
     {
-        foreach (CMPlayerInfo playerInfo in playersInfo) {
-            if (playerInfo.gameObject != null && playerInfo.gameObject.Equals(gameObject)) {
-                //Log("Remove Player " + gameObject);
-                foreach (CMBoneChain boneChain in playerInfo.boneChains) {
-                    boneChain.enabled = true;
+        foreach (CMPlayerInfo player in playersInfo) {
+            if (player.gameObject != null && player.gameObject.Equals(gameObject)) {
+                player.enableDynamicBones = true;
+                player.showDebugCollider = false;
+                foreach (CMBoneChain boneChain in player.boneChains) {
+                    boneChain.RestoreOriginalState();
                     boneChain.RestoreOriginalColliders();
                 }
-                playersInfo.Remove(playerInfo);
+                playersInfo.Remove(player);
                 break;
             }
         }
@@ -83,30 +107,13 @@ public class CollisionsManager
 
     public bool Contains(GameObject gameObject)
     {
-        foreach (CMPlayerInfo playerInfo in playersInfo) {
-            if (playerInfo.gameObject != null && playerInfo.gameObject.Equals(gameObject))
+        foreach (CMPlayerInfo player in playersInfo) {
+            if (player.gameObject != null && player.gameObject.Equals(gameObject))
                 return true;
         }
         return false;
     }
-
-    public bool enabled {
-        get { return _enabled; }
-        set {
-            if (_enabled != value) {
-                _enabled = value;
-                if (!value) {
-                    foreach (CMPlayerInfo player in playersInfo) {
-                        player.enableDynamicBones = true;
-                        foreach (CMBoneChain boneChain in player.boneChains) {
-                            boneChain.RestoreOriginalColliders();
-                        }
-                    }
-                }
-            }
-        }
-    }
-
+    
     public void Update()
     {
         // remove objects that has been destroyed
@@ -118,20 +125,17 @@ public class CollisionsManager
             }
         }
 
-        if (!enableDynamicBones) {
-            foreach (CMPlayerInfo player in playersInfo) {
-                if (_enabled)
-                    player.enableDynamicBones = false;
-                player.showDebugCollider = showDebugColliders;
+        foreach (CMPlayerInfo player in playersInfo) {
+            player.showDebugCollider = showDebugColliders;
+            if (player.enableDynamicBones && _dynamicBonesMode == CMDynamicBonesMode.Disabled) {
+                player.enableDynamicBones = false;
+                player.SetDebugColliderColor(debugColliderColorInactive);
             }
         }
-        else if (_enabled) {
-            UpdateCollisions();
-        }
-    }
-    
-    void UpdateCollisions()
-    {
+
+        if (_dynamicBonesMode == CMDynamicBonesMode.Disabled)
+            return;
+
         Camera camera = Camera.main;
         if (camera == null)
             return;
@@ -145,20 +149,13 @@ public class CollisionsManager
         int maxCollidersCount  = 0;
         foreach (CMPlayerInfo player in playersInfo) {
             maxBoneChainsCount += player.boneChains.Count;
-            maxCollidersCount  += player.allColliders.Count;
-            player.showDebugCollider = showDebugColliders;
+            maxCollidersCount += player.allColliders.Count;
         }
         
         var enabledPlayers = new List<CMPlayerInfo>(playersInfo.Count);
-
-        CMPlayerInfo localPlayer = null;
         
         foreach (CMPlayerInfo player in playersInfo) {
-            if (player.isLocalPlayer)
-                localPlayer = player;
-
             float distanceToCamera = (player.isLocalPlayer || !enableOptimizations ? 0 : (player.center - cameraPos).magnitude);
-            //float ss = ScreenSpaceTakenByPlayer(player);
 
             // enable/disable collisions for player
             if (player.isLocalPlayer || !enableOptimizations)
@@ -233,11 +230,8 @@ public class CollisionsManager
         }
         
         if (showDebugColliders) {
-            var defaultColor  = new Vector4(1, 1, 1, 0.35f);
-            var collideColor  = new Vector4(0.44f, 0, 1, 0.35f);
-            var inactiveColor = new Vector4(0.5f, 0.5f, 0.5f, 0.3f);
             foreach (CMPlayerInfo player in playersInfo)
-                player.SetDebugColliderColor(allCollidingPlayers.Contains(player) ? collideColor : (enabledPlayers.Contains(player) ? defaultColor : inactiveColor));
+                player.SetDebugColliderColor(allCollidingPlayers.Contains(player) ? debugColliderColorCollide : (enabledPlayers.Contains(player) ? debugColliderColorDefault : debugColliderColorInactive));
         }
         
         enabledPlayers.Clear();
@@ -248,9 +242,9 @@ public class CollisionsManager
     CMPlayerInfo GetPlayerForGameObject(GameObject gameObject)
     {
         if (gameObject != null) {
-            foreach (CMPlayerInfo playerInfo in playersInfo) {
-                if (playerInfo.gameObject != null && playerInfo.gameObject.Equals(gameObject))
-                    return playerInfo;
+            foreach (CMPlayerInfo player in playersInfo) {
+                if (player.gameObject != null && player.gameObject.Equals(gameObject))
+                    return player;
             }
         }
         return null;
@@ -284,8 +278,6 @@ public class CollisionsManager
         float fov = Mathf.Min(camera.fieldOfView, fovHor);
         float dist = (obj.transform.position - camera.transform.position).magnitude;
         float spaceTaken = radius / Mathf.Tan(0.5f * fov * Mathf.Deg2Rad) / dist;
-
-        //Log("fov = " + fov + ", hor fov = " + fovHor + ", object size = (" + max.x + "," + max.y + "," + max.z + "), center = " + bounds.center + ", dist = " + dist + ", radius = " + radius + ", spaceTaken = " + spaceTaken);
         return spaceTaken;
     }
 
@@ -298,8 +290,6 @@ public class CollisionsManager
         float fov = Mathf.Min(camera.fieldOfView, fovHor);
         float dist = (player.center - camera.transform.position).magnitude;
         float spaceTaken = player.radius / Mathf.Tan(0.5f * fov * Mathf.Deg2Rad) / dist;
-
-        //Log("fov = " + fov + ", hor fov = " + fovHor + ", object size = (" + max.x + "," + max.y + "," + max.z + "), center = " + bounds.center + ", dist = " + dist + ", radius = " + radius + ", spaceTaken = " + spaceTaken);
         return spaceTaken;
     }
 
@@ -332,9 +322,5 @@ public class CollisionsManager
                     FindComponents(child, type, true, true, results);
             }
         }
-    }
-
-    void Log(string s) {
-        Debug.Log("[CollisionsManager] " + s);
     }
 }

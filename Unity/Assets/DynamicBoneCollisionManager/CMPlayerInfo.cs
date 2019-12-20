@@ -110,11 +110,8 @@ class CMPlayerInfo
         set {
             if (_enableDynamicBones != value) {
                 _enableDynamicBones = value;
-                foreach (CMBoneChain chain in boneChains) {
+                foreach (CMBoneChain chain in boneChains)
                     chain.enabled = value;
-                    if (!value)
-                        chain.RestoreOriginalColliders();
-                }
             }
         }
     }
@@ -238,7 +235,7 @@ class CMPlayerInfo
             }
         }
     }
-
+    
     public void SetDebugColliderColor(Vector4 color)
     {
         if (_colliderMaterial != null)

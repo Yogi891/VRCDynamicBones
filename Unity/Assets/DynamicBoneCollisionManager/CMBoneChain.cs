@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 class CMBoneChain {
 
@@ -31,9 +32,14 @@ class CMBoneChain {
         this.parentObject = parentObject;
 
         _enabled = _boneWasEnabled = bone.enabled;
-
-        while (bone.m_Colliders.Remove(null));
+        
+        bone.m_Colliders.RemoveAll(item => item == null);
         originalColliders = new List<DynamicBoneCollider>(bone.m_Colliders);
+    }
+
+    public void RestoreOriginalState() {
+        if (bone != null)
+            bone.enabled = _boneWasEnabled;
     }
 
     public void RestoreOriginalColliders() {

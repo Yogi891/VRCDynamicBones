@@ -28,7 +28,7 @@ namespace VRCDynamicBones
         }
     }
 
-    [VRCModInfo("VRCDynamicBones", "1.0.0", "Kova")]
+    [VRCModInfo("VRCDynamicBones", "1.0.1", "Kova")]
     internal class VRCDynamicBones : VRCMod
     {
         static QuickMenu quickMenu;
@@ -46,15 +46,14 @@ namespace VRCDynamicBones
         {
             const string configFile = "/UserData/dynamicbonesprefs.json";
 
-            public bool  manageDynamicBones    = false; // Enables/disables control over dynamic bones
-            public bool  enableDynamicBones    = true;  // Enables/disables dynamic bones
-            public int   dynamicBonesMode      = 0;     // Local for everyone / Between you and other players / Between all players
-            public float workingDistance       = 5;     // Maximum distance from you to dynamic bones at which they will stay enabled
-            public int   updateRateMode        = 1;     // Constant / Distance Dependent
-            public float maxUpdateRate         = 0;     // Update rate for dynamic bones that are local or that are very close to you when Distance Dependent mode is enabled
-            public float minUpdateRate         = 30;    // Update rate for dynamic bones that are far away
-            public int   localCollidersFilter  = 0;     // Enables specific colliders filter mode for local user
-            public int   othersCollidersFilter = 0;     // Enables specific colliders filter mode for other players
+            public bool  enableAdvancedSettings = false;  // Enables Advanced Settings (i.e. control over dynamic bones with this mod)
+            public int   dynamicBonesMode       = 0;      // -1..2 : Disabled / Local for everyone / Between you and other players / Between all players
+            public float workingDistance        = 5;      // Maximum distance from you to dynamic bones at which they will stay enabled
+            public int   updateRateMode         = 1;      // 0..1 : Constant / Distance Dependent
+            public float maxUpdateRate          = 0;      // Update rate for dynamic bones that are local or that are very close to you when Distance Dependent mode is enabled
+            public float minUpdateRate          = 30;     // Update rate for dynamic bones that are far away
+            public int   localCollidersFilter   = 0;      // 0..2 : Enables specific colliders filter mode for local user    : All / Chest and up / Hands only
+            public int   othersCollidersFilter  = 0;      // 0..2 : Enables specific colliders filter mode for other players : All / Chest and up / Hands only
 
             public static Config Load()
             {
@@ -91,7 +90,7 @@ namespace VRCDynamicBones
         List<PlayerInfo> players = new List<PlayerInfo>(100);
 
         VRCEUiQuickButton openMenuButton;
-        VRCEUiQuickButton enableButton, modeButton, distanceButton, updateRateModeButton;
+        VRCEUiQuickButton enableButton, bonesModeButton, distanceButton, updateRateModeButton;
         VRCEUiQuickButton localCollidersFilterButton, othersCollidersFilterButton, maxUpdateRateButton, minUpdateRateButton;
         
         Config config;
@@ -115,21 +114,21 @@ namespace VRCDynamicBones
             Log("Start " + ModName);
             
             config = Config.Load();
-            
+            ApplySettings();
             UpdateMenu();
         }
 
         void UpdateMenu()
         {
             if (openMenuButton == null) {
-                openMenuButton = new VRCEUiQuickButton(ModName + "MenuButton", new Vector2(-1050f, 1050f), "Dynamic Bones", "Dynamic Bones Advanced Settings", MyQuickMenu.transform.Find("ShortcutMenu"));
+                openMenuButton = new VRCEUiQuickButton(ModName + "MenuButton", new Vector2(-1050f, 1050f), "Dynamic Bones Advanced", "Dynamic Bones Advanced Settings", MyQuickMenu.transform.Find("ShortcutMenu"));
                 openMenuButton.OnClick += OpenMenu;
                 
                 menuPage = new VRCEUiQuickMenu(ModName + "Menu", true);
                 
                 // Buttons:
-                //   Dynamic Bones            DISABLED / ENABLED
-                //   Mode                     LOCAL / GLOBAL (YOU) / GLOBAL (EVERYONE)  (Local / Between You and Other Players / Between All Players)
+                //   Advanced Settings        Enabled (control over dynamic bones) / Disabled (default dynamic bones behaviour)
+                //   Dynamic Bones Mode       LOCAL / GLOBAL (YOU) / GLOBAL (EVERYONE)  (Local / Between You and Other Players / Between All Players / Disabled)
                 //   Working Distance         3m/5m/10m/20m/40m/INFINITE                (Maximum distance from user to dynamic bones at which they will stay enabled)
                 //   Update Rate              Constant / Distance Dependent             (Constant update rate or distance dependent)
                 //   Max Update Rate          30/60/90/120/Display Rate                 (Update rate for dynamic bones that are local or close to the user)
@@ -137,25 +136,33 @@ namespace VRCDynamicBones
                 //   Local Colliders Filter   ALL / UPPER BODY / HANDS ONLY             (Filters specific colliders for local user avatar)
                 //   Others Colliders Filter  ALL / UPPER BODY / HANDS ONLY             (Filters specific colliders for other players)
 
-                enableButton                = AddButton("", "Enables/Disables Dynamic Bones",                                                 ToggleDynamicBones);
-                modeButton                  = AddButton("", "Dynamic bones mode:\nLocal, Between You and Other Players, Between All Players", ToggleMode);
-                distanceButton              = AddButton("", "Maximum distance from user to dynamic bones\nat which they will stay enabled",   ToggleDistance);
-                updateRateModeButton        = AddButton("", "Constant update rate or\nDistance Dependent update rate",                        ToggleUpdateRateMode);
-                localCollidersFilterButton  = AddButton("", "Filters specific colliders for your avatar: All / Chest and Up / Hands Only",    ToggleLocalCollidersFilterMode);
-                othersCollidersFilterButton = AddButton("", "Filters specific colliders for other players: All / Chest and Up / Hands Only",  ToggleOthersCollidersFilterMode);
-                maxUpdateRateButton         = AddButton("", "Update rate for dynamic bones\nthat are local or close to the user",             ToggleMaxUpdateRate);
-                minUpdateRateButton         = AddButton("", "Update rate for dynamic bones\nthat are far away",                               ToggleMinUpdateRate);
+                enableButton                = AddButton("", "Advanced Settings:\nEnabled / Disabled (default dynamic bones behaviour)", ToggleAdvancedSettings);
+                bonesModeButton             = AddButton("", "Dynamic Bones Mode:\nLocal / Between You and Other Players / Between All Players / Disabled", ToggleBonesMode);
+                distanceButton              = AddButton("", "Maximum distance from user to dynamic bones\nat which they will stay enabled", ToggleDistance);
+                updateRateModeButton        = AddButton("", "Constant update rate or\nDistance Dependent update rate", ToggleUpdateRateMode);
+                localCollidersFilterButton  = AddButton("", "Filters specific colliders for your avatar:\nAll / Chest and Up / Hands Only", ToggleLocalCollidersFilterMode);
+                othersCollidersFilterButton = AddButton("", "Filters specific colliders for other players:\nAll / Chest and Up / Hands Only", ToggleOthersCollidersFilterMode);
+                maxUpdateRateButton         = AddButton("", "Update rate for dynamic bones\nthat are local or close to the user", ToggleMaxUpdateRate);
+                minUpdateRateButton         = AddButton("", "Update rate for dynamic bones\nthat are far away", ToggleMinUpdateRate);
             }
             
-            enableButton.Text                = "Dynamic Bones\n" + (config.enableDynamicBones ? "ENABLED" : "DISABLED");
-            modeButton.Text                  = "Mode\n" + (config.dynamicBonesMode == 0 ? "LOCAL" : (config.dynamicBonesMode == 1 ? "GLOBAL\nYOU" : "GLOBAL\nEVERYONE"));
-            distanceButton.Text              = "Working Distance\n" + (config.workingDistance <= 0 ? "INFINITE" : " " + (config.workingDistance).ToString() + "m");
-            updateRateModeButton.Text        = "Update Rate Mode\n" + (config.updateRateMode == 0 ? "CONSTANT" : "DISTANCE");
+            enableButton.Text                = "Advanced Settings\n" + (config.enableAdvancedSettings ? "ENABLED" : "DISABLED");
+            bonesModeButton.Text             = "Mode\n"              + new string[] { "DISABLED", "LOCAL", "GLOBAL\nYOU", "GLOBAL\nEVERYONE" }[config.dynamicBonesMode+1];
+            distanceButton.Text              = "Working Distance\n"  + (config.workingDistance <= 0 ? "INFINITE" : " " + (config.workingDistance).ToString() + "m");
+            updateRateModeButton.Text        = "Update Rate Mode\n"  + (config.updateRateMode == 0 ? "CONSTANT" : "DISTANCE");
             localCollidersFilterButton.Text  = "Your Colliders\n"    + (config.localCollidersFilter  == 0 ? "ALL" : (config.localCollidersFilter  == 1 ? "TOP" : "HANDS"));
             othersCollidersFilterButton.Text = "Other's Colliders\n" + (config.othersCollidersFilter == 0 ? "ALL" : (config.othersCollidersFilter == 1 ? "TOP" : "HANDS"));
             maxUpdateRateButton.Text         = (config.updateRateMode == 0 ? "Update Rate\n" : "Max Rate\n") + (config.maxUpdateRate > 0 ? " " + (config.maxUpdateRate).ToString() : "DISPLAY");
             minUpdateRateButton.Text         = "Min Rate\n" + (config.minUpdateRate > 0 ? " " + (config.minUpdateRate).ToString() : "DISPLAY");
-            minUpdateRateButton.Control.gameObject.SetActive(config.updateRateMode != 0);  // show/hide button
+            
+            // show/hide buttons
+            bonesModeButton.Control.gameObject.SetActive(config.enableAdvancedSettings);
+            distanceButton.Control.gameObject.SetActive(config.enableAdvancedSettings);
+            updateRateModeButton.Control.gameObject.SetActive(config.enableAdvancedSettings);
+            localCollidersFilterButton.Control.gameObject.SetActive(config.enableAdvancedSettings);
+            othersCollidersFilterButton.Control.gameObject.SetActive(config.enableAdvancedSettings);
+            maxUpdateRateButton.Control.gameObject.SetActive(config.enableAdvancedSettings);
+            minUpdateRateButton.Control.gameObject.SetActive(config.enableAdvancedSettings && config.updateRateMode != 0);
         }
 
         static int buttonsAdded = 0;
@@ -194,6 +201,9 @@ namespace VRCDynamicBones
         
         void OnUpdate()
         {
+            if (config == null || !config.enableAdvancedSettings)
+                return;
+
             float time = Time.time;
             if (time - lastTimePlayersUpdated >= playersUpdateInterval) {
                 UpdatePlayers();
@@ -215,7 +225,7 @@ namespace VRCDynamicBones
                      player.vrcPlayer.avatarGameObject == null ||
                      player.vrcPlayer.avatarGameObject.name.IndexOf("Avatar_Utility_Base_") == 0);
         }
-
+        
         bool PlayerListContainsPlayer(List<PlayerInfo> playerList, PlayerInfo player)
         {
             foreach (PlayerInfo p in playerList) {
@@ -229,7 +239,7 @@ namespace VRCDynamicBones
         {
             if (VRC.Core.APIUser.CurrentUser == null)
                 return;
-
+            
             // Remove destroyed objects
             for (int i = 0; i < players.Count; i++) {
                 PlayerInfo p = players[i];
@@ -260,18 +270,25 @@ namespace VRCDynamicBones
         #endregion
         #region Functions
 
-        public void ToggleDynamicBones()
+        public void ToggleAdvancedSettings()
         {
-            Log("ToggleDynBones()");
-            config.enableDynamicBones = !config.enableDynamicBones;
+            Log("ToggleMod()");
+            config.enableAdvancedSettings = !config.enableAdvancedSettings;
+            if (config.enableAdvancedSettings)
+                config.dynamicBonesMode = Mathf.Max(config.dynamicBonesMode, 0);
+            else {
+                Log("Advanced Settings has been disabled");
+                players.Clear();
+                collisionManager.Clear();
+            }
             ApplySettings();
             UpdateMenu();
         }
         
-        public void ToggleMode()
+        public void ToggleBonesMode()
         {
-            Log("ToggleMode()");
-            config.dynamicBonesMode = NextValue(new int[] { 0, 1, 2 }, config.dynamicBonesMode);  // Local / Between You and Other Players / Between All Players
+            Log("ToggleBonesMode()");
+            config.dynamicBonesMode = NextValue(new int[] { 0, 1, 2, -1 }, config.dynamicBonesMode);  // Local / Between You and Other Players / Between All Players / Disabled
             ApplySettings();
             UpdateMenu();
         }
@@ -344,7 +361,6 @@ namespace VRCDynamicBones
         
         void ApplySettings()
         {
-            collisionManager.enableDynamicBones    = config.enableDynamicBones;
             collisionManager.dynamicBonesMode      = (CMDynamicBonesMode)config.dynamicBonesMode;
             collisionManager.workingDistance       = config.workingDistance;
             collisionManager.updateRateMode        = (CMUpdateRateMode)config.updateRateMode;
@@ -352,7 +368,7 @@ namespace VRCDynamicBones
             collisionManager.minUpdateRate         = config.minUpdateRate;
             collisionManager.localCollidersFilter  = (CMCollidersFilter)config.localCollidersFilter;
             collisionManager.othersCollidersFilter = (CMCollidersFilter)config.othersCollidersFilter;
-            
+
             config.Save();
         }
         

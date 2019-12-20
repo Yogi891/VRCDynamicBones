@@ -3,28 +3,27 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using System.IO;
 
 public class GameController : MonoBehaviour
 {
     public GameObject player;
-    public float      eyeHeight    = 1.265f;
-    public int        clonesNumber = 18;
-    public float      cloneRadius  = 3.0f;
-    public int        cloneRings   = 2;
+
+    public float eyeHeight    = 1.5f;
+    public int   clonesNumber = 18;
+    public float cloneRadius  = 5.0f;
+    public int   cloneRings   = 2;
 
     int   prevClonesNumber;
     float prevCloneRadius;
     int   prevCloneRings;
-
-    public bool                enableDynamicBones    = true;
-    public CMDynamicBonesMode  dynamicBonesMode      = CMDynamicBonesMode.Local;   // Local for everyone / Between you and other players / Between all players
-    [Range(0, 100)] public int workingDistance       = 10;                         // Maximum distance from you to dynamic bones at which they will stay enabled
-    public CMUpdateRateMode    updateRateMode        = CMUpdateRateMode.Constant;  // Constant / Distance Dependent
-    [Range(0, 120)] public int maxUpdateRate         = 60;                         // Update rate for dynamic bones that are local or that are very close to you when Distance Dependent mode is enabled
-    [Range(0, 120)] public int minUpdateRate         = 15;                         // Update rate for dynamic bones that are far away
-    [Range(0, 2)]   public int localCollidersFilter  = 0;                          // Filters specific colliders for your avatar
-    [Range(0, 2)]   public int othersCollidersFilter = 0;                          // Filters specific colliders for other players
-
+    
+    public CMDynamicBonesMode  dynamicBonesMode = CMDynamicBonesMode.Local;   // Local for everyone / Between you and other players / Between all players
+    [Range(0, 100)] public int workingDistance  = 10;                         // Maximum distance from you to dynamic bones at which they will stay enabled
+    public CMUpdateRateMode    updateRateMode   = CMUpdateRateMode.Constant;  // Constant / Distance Dependent
+    [Range(0, 120)] public int maxUpdateRate    = 60;                         // Update rate for dynamic bones that are local or that are very close to you when Distance Dependent mode is enabled
+    [Range(0, 120)] public int minUpdateRate    = 15;                         // Update rate for dynamic bones that are far away
+    
     public bool enableOptimizations = true;
 
     public bool showDebugColliders;
@@ -32,21 +31,20 @@ public class GameController : MonoBehaviour
     List<GameObject> players = new List<GameObject>();
 
     CollisionsManager collisionManager = new CollisionsManager();
-    
+
     void OnValidate()
     {
         if (Application.isEditor && Application.isPlaying)
         {
             bool needRestart = (clonesNumber != prevClonesNumber || cloneRadius != prevCloneRadius || cloneRings != prevCloneRings);
+            
+            collisionManager.dynamicBonesMode = dynamicBonesMode;
+            collisionManager.workingDistance  = workingDistance;
+            collisionManager.updateRateMode   = updateRateMode;
+            collisionManager.maxUpdateRate    = maxUpdateRate;
+            collisionManager.minUpdateRate    = minUpdateRate;
 
-            collisionManager.enableDynamicBones = enableDynamicBones;
-            collisionManager.dynamicBonesMode   = dynamicBonesMode;
-            collisionManager.workingDistance    = workingDistance;
-            collisionManager.updateRateMode     = updateRateMode;
-            collisionManager.maxUpdateRate      = maxUpdateRate;
-            collisionManager.minUpdateRate      = minUpdateRate;
-
-            collisionManager.enableOptimizations  = enableOptimizations;
+            collisionManager.enableOptimizations = enableOptimizations;
 
             collisionManager.showDebugColliders = showDebugColliders;
 
@@ -61,12 +59,17 @@ public class GameController : MonoBehaviour
     
     void Restart()
     {
+        Debug.Log("Restart");
+
         foreach (var p in players) {
             collisionManager.Remove(p);
             if (p != player)
                 Destroy(p);
         }
         players.Clear();
+
+        if (player == null)
+            return;
 
         if (clonesNumber < 0 || cloneRadius <= 0) {
             player.SetActive(true);
@@ -76,14 +79,14 @@ public class GameController : MonoBehaviour
         player.SetActive(false);
 
         AddPlayerClone(player, player.transform.position, true);
-        
+
         int rings = Math.Min(Math.Max(cloneRings, 1), clonesNumber);
         int sum = 1;
         for (int ri = 1; ri < rings; ri++) {
             sum += sum * 2;
         }
         float nk = 1.0f / (float)sum;  // 1.0 for 1 ring, 0.333 for 2 rings, 0.143 for 3 rings
-        
+
         for (int ri = 1; ri <= rings; ri++) {
             int nPerRing = Mathf.RoundToInt((float)clonesNumber * ri * nk);
             float r = cloneRadius * (float)ri / (float)rings;
