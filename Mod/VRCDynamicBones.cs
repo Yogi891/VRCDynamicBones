@@ -28,7 +28,7 @@ namespace VRCDynamicBones
         }
     }
 
-    [VRCModInfo("VRCDynamicBones", "1.0.1", "Kova")]
+    [VRCModInfo("VRCDynamicBones", "1.0.2", "Kova")]
     internal class VRCDynamicBones : VRCMod
     {
         static QuickMenu quickMenu;
