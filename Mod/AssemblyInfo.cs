@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("VRCDynamicBones")]
-[assembly: AssemblyDescription("Brings optimization options for dynamic bones and can make them work globally.")]
+[assembly: AssemblyDescription("Dynamic Bones optimization, global working mode and more.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Kova")]
 [assembly: AssemblyProduct("VRCDynamicBones")]
-[assembly: AssemblyCopyright("Copyright © Kova 2019")]
+[assembly: AssemblyCopyright("Copyright © Kova 2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.2.0")]
-[assembly: AssemblyFileVersion("1.0.2.0")]
+[assembly: AssemblyVersion("1.0.3")]
+[assembly: AssemblyFileVersion("1.0.3")]

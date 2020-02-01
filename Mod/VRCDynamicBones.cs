@@ -28,7 +28,7 @@ namespace VRCDynamicBones
         }
     }
 
-    [VRCModInfo("VRCDynamicBones", "1.0.2", "Kova")]
+    [VRCModInfo("VRCDynamicBones", "1.0.3", "Kova")]
     internal class VRCDynamicBones : VRCMod
     {
         static QuickMenu quickMenu;
@@ -46,6 +46,9 @@ namespace VRCDynamicBones
         {
             const string configFile = "/UserData/dynamicbonesprefs.json";
 
+            public float menuButtonPositionX    = -1;
+            public float menuButtonPositionY    = 1;
+
             public bool  enableAdvancedSettings = false;  // Enables Advanced Settings (i.e. control over dynamic bones with this mod)
             public int   dynamicBonesMode       = 0;      // -1..2 : Disabled / Local for everyone / Between you and other players / Between all players
             public float workingDistance        = 5;      // Maximum distance from you to dynamic bones at which they will stay enabled
@@ -54,6 +57,8 @@ namespace VRCDynamicBones
             public float minUpdateRate          = 30;     // Update rate for dynamic bones that are far away
             public int   localCollidersFilter   = 0;      // 0..2 : Enables specific colliders filter mode for local user    : All / Chest and up / Hands only
             public int   othersCollidersFilter  = 0;      // 0..2 : Enables specific colliders filter mode for other players : All / Chest and up / Hands only
+            
+            public string version = "1.03";
 
             public static Config Load()
             {
@@ -83,8 +88,6 @@ namespace VRCDynamicBones
             }
         }
 
-        const string ModName = "VRCDynamicBones";
-
         const float playersUpdateInterval = 1f/10f;
         
         List<PlayerInfo> players = new List<PlayerInfo>(100);
@@ -111,20 +114,32 @@ namespace VRCDynamicBones
             // Wait for load
             yield return VRCMenuUtilsAPI.WaitForInit();
             
-            Log("Start " + ModName);
-            
-            config = Config.Load();
-            ApplySettings();
-            UpdateMenu();
+            if (!HasNewerVersionInstalled()) {
+                Log("Start " + this.Name);
+                config = Config.Load();
+                ApplySettings();
+                UpdateMenu();
+            }
+        }
+
+        bool HasNewerVersionInstalled()
+        {
+            foreach (var mod in ModManager.Mods) {
+                if (mod != this && mod.Name.Equals(this.Name) && String.Compare(mod.Version, this.Version) >= 0)
+                    return true;
+            }
+            return false;
         }
 
         void UpdateMenu()
         {
             if (openMenuButton == null) {
-                openMenuButton = new VRCEUiQuickButton(ModName + "MenuButton", new Vector2(-1050f, 1050f), "Dynamic Bones Advanced", "Dynamic Bones Advanced Settings", MyQuickMenu.transform.Find("ShortcutMenu"));
+                var menuButtonPos = new Vector2(-630 + 420 * config.menuButtonPositionX, 1470 - 420 * config.menuButtonPositionY);
+                openMenuButton = new VRCEUiQuickButton(this.Name + "MenuButton", menuButtonPos, "Dynamic Bones Advanced", "Dynamic Bones Advanced Settings", MyQuickMenu.transform.Find("ShortcutMenu"));
+                openMenuButton.Control.gameObject.SetActive(true);
                 openMenuButton.OnClick += OpenMenu;
                 
-                menuPage = new VRCEUiQuickMenu(ModName + "Menu", true);
+                menuPage = new VRCEUiQuickMenu(this.Name + "Menu", true);
                 
                 // Buttons:
                 //   Advanced Settings        Enabled (control over dynamic bones) / Disabled (default dynamic bones behaviour)
@@ -172,7 +187,8 @@ namespace VRCDynamicBones
             int xi = buttonsAdded % 4;
             int yi = buttonsAdded / 4;
             Vector2 pos = new Vector2(-625 + xi * 420, 1050 - yi * 420);
-            var button = new VRCEUiQuickButton(ModName + "Button" + buttonsAdded, pos, text, tooltip, menuPage.Control.transform);
+            var button = new VRCEUiQuickButton(this.Name + "Button" + buttonsAdded, pos, text, tooltip, menuPage.Control.transform);
+            button.Control.gameObject.SetActive(true);
             button.OnClick += action;
             buttonsAdded++;
             return button;
