@@ -28,7 +28,7 @@ namespace VRCDynamicBones
         }
     }
 
-    [VRCModInfo("VRCDynamicBones", "1.0.3", "Kova")]
+    [VRCModInfo("VRCDynamicBones", "1.0.4", "Kova")]
     internal class VRCDynamicBones : VRCMod
     {
         static QuickMenu quickMenu;
@@ -44,8 +44,6 @@ namespace VRCDynamicBones
 
         class Config
         {
-            const string configFile = "/UserData/dynamicbonesprefs.json";
-
             public float menuButtonPositionX    = -1;
             public float menuButtonPositionY    = 1;
 
@@ -58,17 +56,26 @@ namespace VRCDynamicBones
             public int   localCollidersFilter   = 0;      // 0..2 : Enables specific colliders filter mode for local user    : All / Chest and up / Hands only
             public int   othersCollidersFilter  = 0;      // 0..2 : Enables specific colliders filter mode for other players : All / Chest and up / Hands only
             
-            public string version = "1.03";
+            public string version = "1.04";
 
-            public static Config Load()
-            {
-                string path = Directory.GetParent(Application.dataPath) + configFile;
-                return (File.Exists(path) ? JsonConvert.DeserializeObject<Config>(File.ReadAllText(path)) : new Config());
+            public static string DefaultPath {
+                get { return Directory.GetParent(Application.dataPath) + "/UserData/dynamicbonesprefs.json"; }
             }
 
-            public void Save()
+            public static Config Load(string path)
             {
-                string path = Directory.GetParent(Application.dataPath) + configFile;
+                Config config = null;
+                try {
+                    config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(path));
+                }
+                catch (Exception) {
+                    config = new Config();
+                }
+                return config;
+            }
+
+            public void Save(string path)
+            {
                 string dir = Path.GetDirectoryName(path);
                 if (!Directory.Exists(dir))
                     Directory.CreateDirectory(dir);
@@ -106,6 +113,7 @@ namespace VRCDynamicBones
 
         void OnApplicationStart()
         {
+            Log("Start " + this.Name);
             ModManager.StartCoroutine(Setup());
         }
 
@@ -115,10 +123,14 @@ namespace VRCDynamicBones
             yield return VRCMenuUtilsAPI.WaitForInit();
             
             if (!HasNewerVersionInstalled()) {
-                Log("Start " + this.Name);
-                config = Config.Load();
+                Log("Setup " + this.Name + "...");
+                Log("  load config... " + Config.DefaultPath);
+                config = Config.Load(Config.DefaultPath);
+                Log("  apply settings...");
                 ApplySettings();
+                Log("  setup menu...");
                 UpdateMenu();
+                Log("Success");
             }
         }
 
@@ -385,7 +397,7 @@ namespace VRCDynamicBones
             collisionManager.localCollidersFilter  = (CMCollidersFilter)config.localCollidersFilter;
             collisionManager.othersCollidersFilter = (CMCollidersFilter)config.othersCollidersFilter;
 
-            config.Save();
+            config.Save(Config.DefaultPath);
         }
         
         #endregion
