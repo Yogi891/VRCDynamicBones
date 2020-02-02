@@ -51,7 +51,7 @@ namespace VRCDynamicBones
             public int   dynamicBonesMode       = 0;      // -1..2 : Disabled / Local for everyone / Between you and other players / Between all players
             public float workingDistance        = 5;      // Maximum distance from you to dynamic bones at which they will stay enabled
             public int   updateRateMode         = 1;      // 0..1 : Constant / Distance Dependent
-            public float maxUpdateRate          = 0;      // Update rate for dynamic bones that are local or that are very close to you when Distance Dependent mode is enabled
+            public float maxUpdateRate          = 60;     // Update rate for dynamic bones that are local or that are very close to you when Distance Dependent mode is enabled
             public float minUpdateRate          = 30;     // Update rate for dynamic bones that are far away
             public int   localCollidersFilter   = 0;      // 0..2 : Enables specific colliders filter mode for local user    : All / Chest and up / Hands only
             public int   othersCollidersFilter  = 0;      // 0..2 : Enables specific colliders filter mode for other players : All / Chest and up / Hands only
