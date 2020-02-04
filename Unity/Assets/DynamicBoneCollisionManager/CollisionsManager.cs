@@ -83,7 +83,7 @@ public class CollisionsManager
     {
         if (gameObject != null && !Contains(gameObject)) {
             playersInfo.Capacity = Math.Max(playersInfo.Capacity, playersInfo.Count + 1);
-
+        
             var playerInfo = new CMPlayerInfo(gameObject, isLocalPlayer, name, eyeHeight);
             playersInfo.Add(playerInfo);
         }
@@ -175,13 +175,13 @@ public class CollisionsManager
                     if (chain.enabled) {
                         // set dynamic bones update rate
                         if (!variableUpdateRate || workingDistance <= 0)
-                            chain.bone.m_UpdateRate = maxUpdateRate;
+                            chain.ChangeUpdateRate(maxUpdateRate);
                         else {
                             float maxFps  = (maxUpdateRate > 0 ? maxUpdateRate : refreshRate);
                             float minFps  = Mathf.Min((minUpdateRate > 0 ? minUpdateRate : refreshRate), maxFps);
                             float dist    = Mathf.Max(distanceToCamera - minimumWorkingDistance, 0);
                             float maxDist = Mathf.Max(workingDistance - minimumWorkingDistance, dist);
-                            chain.bone.m_UpdateRate = Mathf.Lerp(maxFps, minFps, dist/maxDist);
+                            chain.ChangeUpdateRate(Mathf.Lerp(maxFps, minFps, dist/maxDist));
                         }
                     }
                 }

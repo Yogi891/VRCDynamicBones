@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using System.Reflection;
 
 public static class CMExtensions
 {
@@ -32,6 +33,14 @@ public static class CMExtensions
         float r = source.m_Radius * scale;
         float h = 0.5f * source.m_Height - r;
         return (h <= 0 ? r : h * scale + r);
+    }
+
+    public static int GetBound(this DynamicBoneCollider col)
+    {
+        FieldInfo fieldInfo = col.GetType().GetField("m_Bound");
+        if (fieldInfo != null)
+            return (int)fieldInfo.GetValue(col);
+        return 0;
     }
 
     // DynamicBoneCollider: Get World Position

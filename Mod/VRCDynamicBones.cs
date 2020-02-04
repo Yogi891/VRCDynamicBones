@@ -28,7 +28,7 @@ namespace VRCDynamicBones
         }
     }
 
-    [VRCModInfo("VRCDynamicBones", "1.0.4", "Kova")]
+    [VRCModInfo("VRCDynamicBones", "1.0.5", "Kova")]
     internal class VRCDynamicBones : VRCMod
     {
         static QuickMenu quickMenu;
@@ -56,7 +56,7 @@ namespace VRCDynamicBones
             public int   localCollidersFilter   = 0;      // 0..2 : Enables specific colliders filter mode for local user    : All / Chest and up / Hands only
             public int   othersCollidersFilter  = 0;      // 0..2 : Enables specific colliders filter mode for other players : All / Chest and up / Hands only
             
-            public string version = "1.04";
+            public string version = "1.05";
 
             public static string DefaultPath {
                 get { return Directory.GetParent(Application.dataPath) + "/UserData/dynamicbonesprefs.json"; }
@@ -113,7 +113,7 @@ namespace VRCDynamicBones
 
         void OnApplicationStart()
         {
-            Log("Start " + this.Name);
+            Log("Start " + this.Name + " v" + this.Version);
             ModManager.StartCoroutine(Setup());
         }
 
@@ -123,7 +123,7 @@ namespace VRCDynamicBones
             yield return VRCMenuUtilsAPI.WaitForInit();
             
             if (!HasNewerVersionInstalled()) {
-                Log("Setup " + this.Name + "...");
+                Log("Setup...");
                 Log("  load config... " + Config.DefaultPath);
                 config = Config.Load(Config.DefaultPath);
                 Log("  apply settings...");

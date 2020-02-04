@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -72,7 +73,7 @@ class CMPlayerInfo
             if (col != null) {
                 allColliders.Add(col);
                 // we'll ignore 'inside' type of colliders and those that are too big (bigger than the bones total radius)
-                if ((int)col.m_Bound == 0 && col.GetRadius() <= maxColliderRadius) {
+                if (col.GetBound() == 0 && col.GetRadius() <= maxColliderRadius) {
                     sharedColliders.Add(col);
                     if (countForUpperBody)
                         upperBodyColliders.Add(col);
@@ -82,7 +83,7 @@ class CMPlayerInfo
 
         foreach (var t in handsChildren) {
             var col = t.GetComponent<DynamicBoneCollider>();
-            if (col != null && (int)col.m_Bound == 0 && col.GetRadius() <= maxColliderRadius)
+            if (col != null && col.GetBound() == 0 && col.GetRadius() <= maxColliderRadius)
                 handsColliders.Add(col);
         }
         
